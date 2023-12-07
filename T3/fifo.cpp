@@ -8,7 +8,13 @@ private:
     size_t capacity;
     Semaphore mutex; // Semafor binarny do ochrony sekcji krytycznej
     Semaphore empty;  // Semafor do sygnalizowania, że bufor jest pusty
-    Semaphore full;   // Semafor do sygnalizowania, że bufor jest pełny
+    Semaphore full; // Semafor do sygnalizowania, że bufor jest pełny
+    Semaphore semEvenLessThan10;
+    Semaphore semMoreEvensThanOdds;
+    Semaphore semAtLeastThree;
+    Semaphore semAtLeastSeven;
+    Semaphore semFrontEven;
+    Semaphore semFrontOdd;
 
     int evenCount;
     int oddCount;
@@ -17,6 +23,11 @@ public:
     FifoBuffer(size_t cap) : capacity(cap), mutex(1), empty(cap), full(0), evenCount(0), oddCount(0) {}
 
     void put(int value) {
+        if (isEven(value)) {
+            semEvenLessThan10.p(); // Procesy A1 czekają, gdy jest 10 lub więcej liczb parzystych
+        } else {
+            semMoreEvensThanOdds.p(); // Procesy A2 czekają, gdy jest więcej lub tyle samo liczb nieparzystych co parzystych
+        }
         full.p(); // Czeka, aż będzie miejsce w buforze
         mutex.p(); // Blokuje dostęp do bufora
         buffer.push_back(value);
@@ -25,17 +36,37 @@ public:
         empty.v(); // Sygnalizuje, że bufor nie jest pusty
     }
 
-    int get(bool consumeEven) {
-        int value = 0;
-        empty.p(); // Czeka, aż bufor będzie miał elementy
-        mutex.p(); // Blokuje dostęp do bufora
-        if (!buffer.empty() && (consumeEven == isEven(buffer.front()))) {
-            value = buffer.front();
-            buffer.erase(buffer.begin());
-            updateCountsOnGet(value);
-        }
-        mutex.v(); // Zwalnia dostęp do bufora
-        full.v(); // Sygnalizuje, że w buforze jest miejsce
+    int getB1() {
+        semAtLeastThree.p(); // Czeka, aż w buforze będzie co najmniej 3 elementy
+        semFrontEven.p(); // Czeka, aż na froncie bufora będzie liczba parzysta
+        empty.p();
+        mutex.p();
+
+        int value = buffer.front();
+        buffer.erase(buffer.begin());
+        updateCountsOnGet(value);
+
+        updateBufferSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
+        mutex.v();
+        full.v();
+
+        return value;
+    }
+
+    int getB2() {
+        semAtLeastSeven.p(); // Czeka, aż w buforze będzie co najmniej 7 elementów
+        semFrontOdd.p(); // Czeka, aż na froncie bufora będzie liczba nieparzysta
+        empty.p();
+        mutex.p();
+
+        int value = buffer.front();
+        buffer.erase(buffer.begin());
+        updateCountsOnGet(value);
+
+        updateBufferSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
+        mutex.v();
+        full.v();
+
         return value;
     }
 
@@ -68,5 +99,28 @@ private:
 
     bool isEven(int value) const {
         return value % 2 == 0;
+    }
+    void FifoBuffer::updateSemaphores() {
+        if (evenCount < 10) {
+            semEvenLessThan10.v(); // Podnosi semafor, jeśli liczba parzystych jest mniejsza niż 10
+        } else {
+            semEvenLessThan10.p(); // Opuszcza semafor, jeśli liczba parzystych jest 10 lub więcej
+        }
+
+        if (evenCount > oddCount) {
+            semMoreEvensThanOdds.v(); // Podnosi semafor, jeśli jest więcej parzystych niż nieparzystych
+        } else {
+            semMoreEvensThanOdds.p(); // Opuszcza semafor, jeśli jest tyle samo lub mniej parzystych niż nieparzystych
+        }
+        if (!buffer.empty()) {
+            if (isEven(buffer.front())) {
+                semFrontEven.v();
+                semFrontOdd.p(); // Opcjonalnie, możesz zablokować semafor semFrontOdd
+            } else {
+                semFrontOdd.v();
+                semFrontEven.p(); // Opcjonalnie, możesz zablokować semafor semFrontEven
+            }
+        }
+    
     }
 };
