@@ -34,6 +34,12 @@ public:
         updateCountsOnPut(value);
         mutex.v(); // Zwalnia dostęp do bufora
         empty.v(); // Sygnalizuje, że bufor nie jest pusty
+        if (buffer.size() >= 3) {
+            semAtLeastThree.v();
+        }
+        if (buffer.size() >= 7) {
+            semAtLeastSeven.v();
+        }
     }
 
     int getB1() {
@@ -46,7 +52,7 @@ public:
         buffer.erase(buffer.begin());
         updateCountsOnGet(value);
 
-        updateBufferSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
+        updateSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
         mutex.v();
         full.v();
 
@@ -63,7 +69,7 @@ public:
         buffer.erase(buffer.begin());
         updateCountsOnGet(value);
 
-        updateBufferSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
+        updateSemaphores(); // Aktualizuje semafory na podstawie nowego stanu bufora
         mutex.v();
         full.v();
 
@@ -100,7 +106,7 @@ private:
     bool isEven(int value) const {
         return value % 2 == 0;
     }
-    void FifoBuffer::updateSemaphores() {
+    void updateSemaphores() {
         if (evenCount < 10) {
             semEvenLessThan10.v(); // Podnosi semafor, jeśli liczba parzystych jest mniejsza niż 10
         } else {
@@ -112,6 +118,19 @@ private:
         } else {
             semMoreEvensThanOdds.p(); // Opuszcza semafor, jeśli jest tyle samo lub mniej parzystych niż nieparzystych
         }
+
+        if (buffer.size() >= 3) {
+            semAtLeastThree.v();
+        } else {
+            semAtLeastThree.p();
+        }
+
+        if (buffer.size() >= 7) {
+            semAtLeastSeven.v();
+        } else {
+            semAtLeastSeven.p();
+        }
+
         if (!buffer.empty()) {
             if (isEven(buffer.front())) {
                 semFrontEven.v();
@@ -121,6 +140,5 @@ private:
                 semFrontEven.p(); // Opcjonalnie, możesz zablokować semafor semFrontEven
             }
         }
-    
     }
 };
