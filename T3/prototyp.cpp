@@ -57,7 +57,7 @@ bool canConsOdd() {
 	return buffer.size() >= 7 && buffer[0] % 2 == 1;
 }
 
-void prodEven() {
+void* prodEven(void* arg) {
 	while(1) {
 		mutex.p();
 		if (!canProdEven()) {
@@ -77,11 +77,12 @@ void prodEven() {
 		} else {
 			mutex.v();
 		}
-		sleep(1000);
+		sleep(500);
 	}
+	return NULL;
 }
 
-void prodOdd() {
+void* prodOdd(void* arg) {
     while(1) {
         mutex.p();
         if (!canProdOdd()) {
@@ -101,11 +102,12 @@ void prodOdd() {
         } else {
             mutex.v();
         }
-        sleep(1000);
+        sleep(500);
     }
+	return NULL;
 }
 
-void consEven() {
+void* consEven(void* arg) {
     while(1) {
         mutex.p();
         if (!canConsEven()) {
@@ -124,8 +126,33 @@ void consEven() {
         } else {
             mutex.v();
         }
-        sleep(1000);
+        sleep(500);
     }
+	return NULL;
+}
+
+void* consOdd(void* arg) {
+    while(1) {
+        mutex.p();
+        if (!!!canConsOdd()) {
+            numOfConsOddWaiting++;
+            mutex.v();
+            consOddSem.p();
+            numOfConsOddWaiting--;
+        }
+        buffer.erase(buffer.begin());
+        if (numOfProdEvenWaiting > 0 && canProdEven()) {
+            prodEvenSem.v();
+        } else if (numOfProdOddWaiting > 0 && canProdOdd()) {
+            prodOddSem.v();
+        } else if (numOfConsEvenWaiting > 0 && canConsEven()) {
+            consEvenSem.v();
+        } else {
+            mutex.v();
+        }
+        sleep(500);
+    }
+	return NULL;
 }
 
 int main()
