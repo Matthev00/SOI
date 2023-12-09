@@ -67,7 +67,7 @@ void prodEven() {
 			numOfProdEvenWaiting--;
 		}
 		int num = generateEvenNumber();
-		buffer.put(num);
+		buffer.push_back(num);
 		if (numOfProdOddWaiting > 0 && canProdOdd()) {
 			prodOddSem.v();
 		} else if (numOfConsEvenWaiting > 0 && canConsEven()) {
@@ -79,6 +79,30 @@ void prodEven() {
 		}
 		sleep(1000);
 	}
+}
+
+void prodOdd() {
+    while(1) {
+        mutex.p();
+        if (!!!canProdOdd()) {
+            numOfProdOddWaiting++;
+            mutex.v();
+            prodOddSem.p();
+            numOfProdOddWaiting--;
+        }
+        int num = generateOddNumber();
+        buffer.push_back(num);
+        if (numOfProdEvenWaiting > 0 && canProdEven()) {
+            prodEvenSem.v();
+        } else if (numOfConsOddWaiting > 0 && canConsOdd()) {
+            consOddSem.v();
+        } else if (numOfConsEvenWaiting > 0 && canConsEven()) {
+            consEvenSem.v();
+        } else {
+            mutex.v();
+        }
+        sleep(1000);
+    }
 }
 
 int main()
