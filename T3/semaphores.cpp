@@ -191,88 +191,59 @@ int main( int argc, char* argv[])
 	////
 #else
 	pthread_t tid[threadsCounts];
+	int threadsCounts = 0;
+	switch (test_number) {
+    case 1:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        break;
+    case 2:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        break;
+    case 3:
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        break;
+    case 4:
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        break;
+    case 5:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        break;
+    case 6:
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        break;
+    case 7:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        break;
+    case 8:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        break;
+    case 9:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        break;
+    case 10:
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, prodEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, prodOdd, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consEven, NULL);
+        pthread_create(&(tid[threadsCounts++]), NULL, consOdd, NULL);
+        break;
+}
 
-	pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	pthread_create(&(tid[1]), NULL, consEven, NULL);
-
-	pthread_join(tid[0], (void**)NULL);
-	pthread_join(tid[1], (void**)NULL);
-
-	// switch (test_number) {
-    //     case 1:
-	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	// 		pthread_join(tid[0], (void**)NULL);
-    //         break;
-    //     case 2:
-    //         pthread_create(&(tid[1]), NULL, prodOdd, NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-    //         break;
-    //     case 3:
-    //         pthread_create(&(tid[2]), NULL, consEven, NULL);
-	// 		pthread_join(tid[2], (void**)NULL);
-    //         break;
-    //     case 4:
-    //         pthread_create(&(tid[3]), NULL, consOdd, NULL);
-	// 		pthread_join(tid[3], (void**)NULL);
-    //         break;
-    //     case 5:
-    //         pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-    //         break;
-    //     case 6:
-	// 		pthread_create(&(tid[0]), NULL, consEven, NULL);
-	// 		pthread_create(&(tid[1]), NULL, consOdd, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-	// 		break;
-	// 	case 7:	
-	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	// 		pthread_create(&(tid[1]), NULL, consEven, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-	// 		break;
-	// 	case 8:
-	// 		pthread_create(&(tid[0]), NULL, prodOdd, NULL);
-	// 		pthread_create(&(tid[1]), NULL, consOdd, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-	// 		break;
-	// 	case 9:
-	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
-	// 		pthread_create(&(tid[2]), NULL, consEven, NULL);
-	// 		pthread_create(&(tid[3]), NULL, consOdd, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-	// 		pthread_join(tid[2], (void**)NULL);
-	// 		pthread_join(tid[3], (void**)NULL);
-	// 		break;
-	// 	case 10:
-	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
-	// 		pthread_create(&(tid[2]), NULL, consEven, NULL);
-	// 		pthread_create(&(tid[3]), NULL, consOdd, NULL);
-	// 		pthread_create(&(tid[4]), NULL, prodEven, NULL);
-	// 		pthread_create(&(tid[5]), NULL, prodOdd, NULL);
-	// 		pthread_create(&(tid[6]), NULL, consEven, NULL);
-	// 		pthread_create(&(tid[7]), NULL, consOdd, NULL);
-
-	// 		pthread_join(tid[0], (void**)NULL);
-	// 		pthread_join(tid[1], (void**)NULL);
-	// 		pthread_join(tid[2], (void**)NULL);
-	// 		pthread_join(tid[3], (void**)NULL);	
-	// 		pthread_join(tid[4], (void**)NULL);
-	// 		pthread_join(tid[5], (void**)NULL);
-	// 		pthread_join(tid[6], (void**)NULL);
-	// 		pthread_join(tid[7], (void**)NULL);
-    // }
+// Dołączanie wątków
+for (int i = 0; i < threadsCounts; i++) {
+    pthread_join(tid[i], (void**)NULL);
+}
+	
 #endif
 	return 0;
 }
