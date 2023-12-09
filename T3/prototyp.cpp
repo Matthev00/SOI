@@ -4,14 +4,21 @@
 #include <vector>
 
 
-int const threadsCounts = 5;  //liczba wątków
+int const threadsCounts = 8;  //liczba wątków
 
-int const bufferSize = 20;
 int numOfProdEvenWaiting = 0, numOfProdOddWaiting = 0, numOfConsEvenWaiting = 0, numOfConsOddWaiting = 0;
 Semaphore prodEvenSem(0), prodOddSem(0), consEvenSem(0), consOddSem(0);
 Semaphore mutex(1);
 std::vector<int> buffer;
 
+
+void printBuffer() {
+    std::cout << "Buffer: ";
+    for (int i = 0; i < buffer.size(); i++) {
+        std::cout << buffer[i] << " ";
+    }
+    std::cout << std::endl;
+}
 
 int generateEvenNumber() {
 	return rand() % 25 * 2;
@@ -64,46 +71,54 @@ void* prodEven(void* arg) {
 			numOfProdEvenWaiting++;
 			mutex.v();
 			prodEvenSem.p();
+			mutex.p();
 			numOfProdEvenWaiting--;
 		}
-		int num = generateEvenNumber();
-		buffer.push_back(num);
-		if (numOfProdOddWaiting > 0 && canProdOdd()) {
-			prodOddSem.v();
-		} else if (numOfConsEvenWaiting > 0 && canConsEven()) {
+		buffer.push_back(generateEvenNumber());
+		printBuffer();
+		if (numOfConsEvenWaiting > 0 && canConsEven()) {
+			mutex.v();
 			consEvenSem.v();
 		} else if (numOfConsOddWaiting > 0 && canConsOdd()) {
+			mutex.v();
 			consOddSem.v();
+		} else if (numOfProdOddWaiting > 0 && canProdOdd()) {
+			mutex.v();
+			prodOddSem.v();
 		} else {
 			mutex.v();
 		}
-		sleep(500);
+		sleep(1);
 	}
 	return NULL;
 }
 
 void* prodOdd(void* arg) {
-    while(1) {
-        mutex.p();
-        if (!canProdOdd()) {
-            numOfProdOddWaiting++;
-            mutex.v();
-            prodOddSem.p();
-            numOfProdOddWaiting--;
-        }
-        int num = generateOddNumber();
-        buffer.push_back(num);
-        if (numOfProdEvenWaiting > 0 && canProdEven()) {
-            prodEvenSem.v();
-        } else if (numOfConsOddWaiting > 0 && canConsOdd()) {
-            consOddSem.v();
-        } else if (numOfConsEvenWaiting > 0 && canConsEven()) {
-            consEvenSem.v();
-        } else {
-            mutex.v();
-        }
-        sleep(500);
-    }
+	while(1) {
+		mutex.p();
+		if (!canProdOdd()) {
+			numOfProdOddWaiting++;
+			mutex.v();
+			prodOddSem.p();
+			mutex.p();
+			numOfProdOddWaiting--;
+		}
+		buffer.push_back(generateOddNumber());
+		printBuffer();
+		if (numOfConsEvenWaiting > 0 && canConsEven()) {
+			mutex.v();
+			consEvenSem.v();
+		} else if (numOfConsOddWaiting > 0 && canConsOdd()) {
+			mutex.v();
+			consOddSem.v();
+		} else if (numOfProdEvenWaiting > 0 && canProdEven()) {
+			mutex.v();
+			prodEvenSem.v();
+		} else {
+			mutex.v();
+		}
+		sleep(1);
+	}
 	return NULL;
 }
 
@@ -114,19 +129,24 @@ void* consEven(void* arg) {
             numOfConsEvenWaiting++;
             mutex.v();
             consEvenSem.p();
+			mutex.p();
             numOfConsEvenWaiting--;
         }
         buffer.erase(buffer.begin());
+		printBuffer();
         if (numOfProdEvenWaiting > 0 && canProdEven()) {
+            mutex.v();
             prodEvenSem.v();
         } else if (numOfProdOddWaiting > 0 && canProdOdd()) {
+            mutex.v();
             prodOddSem.v();
         } else if (numOfConsOddWaiting > 0 && canConsOdd()) {
+            mutex.v();
             consOddSem.v();
         } else {
             mutex.v();
         }
-        sleep(500);
+        sleep(1);
     }
 	return NULL;
 }
@@ -134,67 +154,125 @@ void* consEven(void* arg) {
 void* consOdd(void* arg) {
     while(1) {
         mutex.p();
-        if (!!!canConsOdd()) {
+        if (!canConsOdd()) {
             numOfConsOddWaiting++;
             mutex.v();
             consOddSem.p();
+			mutex.p();
             numOfConsOddWaiting--;
         }
         buffer.erase(buffer.begin());
+		printBuffer();
         if (numOfProdEvenWaiting > 0 && canProdEven()) {
+            mutex.v();
             prodEvenSem.v();
         } else if (numOfProdOddWaiting > 0 && canProdOdd()) {
+            mutex.v();
             prodOddSem.v();
         } else if (numOfConsEvenWaiting > 0 && canConsEven()) {
+            mutex.v();
             consEvenSem.v();
         } else {
             mutex.v();
         }
-        sleep(500);
+        sleep(1);
     }
 	return NULL;
 }
 
-int main()
+int main( int argc, char* argv[])
 {
+	if (argc != 2) {
+        std::cout << "Usage: ./program <test_number>\n";
+        return 1;
+    }
+	int test_number = std::stoi(argv[1]);
 #ifdef _WIN32
-	HANDLE tid[threadsCounts];
-	DWORD id;
-
-	// utworzenie wątków
-	tid[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProd, 0, 0, &id);
-	tid[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProd, 0, 0, &id);
-	tid[2] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProd, 0, 0, &id);
-	tid[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsA, 0, 0, &id);
-	tid[4] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsB, 0, 0, &id);
-
-	// czekaj na zakończenie wątków
-	for (int i = 0; i <= threadsCounts; i++)
-		WaitForSingleObject(tid[i], INFINITE);
+	////
 #else
 	pthread_t tid[threadsCounts];
 
-	// utworzenie wątków
 	pthread_create(&(tid[0]), NULL, prodEven, NULL);
-	pthread_create(&(tid[1]), NULL, prodOdd, NULL);
-	pthread_create(&(tid[2]), NULL, consEven, NULL);
-	pthread_create(&(tid[3]), NULL, consOdd, NULL);
+	pthread_create(&(tid[1]), NULL, consEven, NULL);
 
-	//czekaj na zakończenie wątków
-	for (int i = 0; i < threadsCounts; i++)
-		pthread_join(tid[i], (void**)NULL);
+	pthread_join(tid[0], (void**)NULL);
+	pthread_join(tid[1], (void**)NULL);
+
+	// switch (test_number) {
+    //     case 1:
+	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
+	// 		pthread_join(tid[0], (void**)NULL);
+    //         break;
+    //     case 2:
+    //         pthread_create(&(tid[1]), NULL, prodOdd, NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+    //         break;
+    //     case 3:
+    //         pthread_create(&(tid[2]), NULL, consEven, NULL);
+	// 		pthread_join(tid[2], (void**)NULL);
+    //         break;
+    //     case 4:
+    //         pthread_create(&(tid[3]), NULL, consOdd, NULL);
+	// 		pthread_join(tid[3], (void**)NULL);
+    //         break;
+    //     case 5:
+    //         pthread_create(&(tid[0]), NULL, prodEven, NULL);
+	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+    //         break;
+    //     case 6:
+	// 		pthread_create(&(tid[0]), NULL, consEven, NULL);
+	// 		pthread_create(&(tid[1]), NULL, consOdd, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+	// 		break;
+	// 	case 7:	
+	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
+	// 		pthread_create(&(tid[1]), NULL, consEven, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+	// 		break;
+	// 	case 8:
+	// 		pthread_create(&(tid[0]), NULL, prodOdd, NULL);
+	// 		pthread_create(&(tid[1]), NULL, consOdd, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+	// 		break;
+	// 	case 9:
+	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
+	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
+	// 		pthread_create(&(tid[2]), NULL, consEven, NULL);
+	// 		pthread_create(&(tid[3]), NULL, consOdd, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+	// 		pthread_join(tid[2], (void**)NULL);
+	// 		pthread_join(tid[3], (void**)NULL);
+	// 		break;
+	// 	case 10:
+	// 		pthread_create(&(tid[0]), NULL, prodEven, NULL);
+	// 		pthread_create(&(tid[1]), NULL, prodOdd, NULL);
+	// 		pthread_create(&(tid[2]), NULL, consEven, NULL);
+	// 		pthread_create(&(tid[3]), NULL, consOdd, NULL);
+	// 		pthread_create(&(tid[4]), NULL, prodEven, NULL);
+	// 		pthread_create(&(tid[5]), NULL, prodOdd, NULL);
+	// 		pthread_create(&(tid[6]), NULL, consEven, NULL);
+	// 		pthread_create(&(tid[7]), NULL, consOdd, NULL);
+
+	// 		pthread_join(tid[0], (void**)NULL);
+	// 		pthread_join(tid[1], (void**)NULL);
+	// 		pthread_join(tid[2], (void**)NULL);
+	// 		pthread_join(tid[3], (void**)NULL);	
+	// 		pthread_join(tid[4], (void**)NULL);
+	// 		pthread_join(tid[5], (void**)NULL);
+	// 		pthread_join(tid[6], (void**)NULL);
+	// 		pthread_join(tid[7], (void**)NULL);
+    // }
 #endif
 	return 0;
 }
-
-// Testy: x2 (startowo pusty bufor i startowo pełny bufor)
-// 1. prodEven
-// 2. prodOdd
-// 3. consEven
-// 4. consOdd
-// 5. prodEven prodOdd
-// 6. consEven consOdd
-// 7. prodEven consEven
-// 8. prodOdd consOdd
-// 9. prodEven prodOdd consEven consOdd
-// 10. prodEven prodOdd consEven consOdd prodEven prodOdd consEven consOdd
