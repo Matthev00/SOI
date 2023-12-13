@@ -71,19 +71,15 @@ void* prodEven(void* arg) {
 			numOfProdEvenWaiting++;
 			mutex.v();
 			prodEvenSem.p();
-			mutex.p();
 			numOfProdEvenWaiting--;
 		}
 		buffer.push_back(generateEvenNumber());
 		printBuffer();
 		if (numOfConsEvenWaiting > 0 && canConsEven()) {
-			mutex.v();
 			consEvenSem.v();
 		} else if (numOfConsOddWaiting > 0 && canConsOdd()) {
-			mutex.v();
 			consOddSem.v();
 		} else if (numOfProdOddWaiting > 0 && canProdOdd()) {
-			mutex.v();
 			prodOddSem.v();
 		} else {
 			mutex.v();
@@ -100,19 +96,15 @@ void* prodOdd(void* arg) {
 			numOfProdOddWaiting++;
 			mutex.v();
 			prodOddSem.p();
-			mutex.p();
 			numOfProdOddWaiting--;
 		}
 		buffer.push_back(generateOddNumber());
 		printBuffer();
 		if (numOfConsEvenWaiting > 0 && canConsEven()) {
-			mutex.v();
 			consEvenSem.v();
 		} else if (numOfConsOddWaiting > 0 && canConsOdd()) {
-			mutex.v();
 			consOddSem.v();
 		} else if (numOfProdEvenWaiting > 0 && canProdEven()) {
-			mutex.v();
 			prodEvenSem.v();
 		} else {
 			mutex.v();
@@ -129,19 +121,15 @@ void* consEven(void* arg) {
             numOfConsEvenWaiting++;
             mutex.v();
             consEvenSem.p();
-			mutex.p();
             numOfConsEvenWaiting--;
         }
         buffer.erase(buffer.begin());
 		printBuffer();
         if (numOfProdEvenWaiting > 0 && canProdEven()) {
-            mutex.v();
             prodEvenSem.v();
         } else if (numOfProdOddWaiting > 0 && canProdOdd()) {
-            mutex.v();
             prodOddSem.v();
         } else if (numOfConsOddWaiting > 0 && canConsOdd()) {
-            mutex.v();
             consOddSem.v();
         } else {
             mutex.v();
@@ -158,19 +146,15 @@ void* consOdd(void* arg) {
             numOfConsOddWaiting++;
             mutex.v();
             consOddSem.p();
-			mutex.p();
             numOfConsOddWaiting--;
         }
         buffer.erase(buffer.begin());
 		printBuffer();
         if (numOfProdEvenWaiting > 0 && canProdEven()) {
-            mutex.v();
             prodEvenSem.v();
         } else if (numOfProdOddWaiting > 0 && canProdOdd()) {
-            mutex.v();
             prodOddSem.v();
         } else if (numOfConsEvenWaiting > 0 && canConsEven()) {
-            mutex.v();
             consEvenSem.v();
         } else {
             mutex.v();
@@ -182,6 +166,9 @@ void* consOdd(void* arg) {
 
 int main( int argc, char* argv[])
 {
+    for (int i = 0; i < 9; i++) {
+        buffer.push_back(i);
+    }
 	if (argc != 2) {
         std::cout << "Usage: ./program <test_number>\n";
         return 1;
@@ -243,7 +230,7 @@ int main( int argc, char* argv[])
 for (int i = 0; i < threadsCounts; i++) {
     pthread_join(tid[i], (void**)NULL);
 }
-	
+
 #endif
 	return 0;
 }
