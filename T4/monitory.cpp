@@ -10,12 +10,13 @@ class MyMonitor : Monitor {
 	Condition prodEvenCond, consEvenCond, prodOddCond, consOddCond;
 public:
 	void putEven(int element);
-	int getEven();
+	void getEven();
 	void putOdd(int element);
-	int getOdd();
+	void getOdd();
     vector<int> getBuffer() {
         return buffer;
     }
+    void printBuffer();
 };
  
 MyMonitor myMonitor;
@@ -71,7 +72,7 @@ void MyMonitor::putEven(int element) {
 		wait(prodEvenCond);
 	}
 	buffer.push_back(element);
-	std::cout << buffer.size() << std::endl;
+	printBuffer();
 	if (prodOddCond.getWaitingCount() && canProdOdd()) {
 		signal(prodOddCond);
 	} else if (consOddCond.getWaitingCount() && canConsOdd()) {
@@ -89,7 +90,7 @@ void MyMonitor::putOdd(int element) {
 		wait(prodOddCond);
 	}
 	buffer.push_back(element);
-	std::cout << buffer.size() << std::endl;
+	printBuffer();
 	if (prodEvenCond.getWaitingCount() && canProdEven()) {
 		signal(prodEvenCond);
 	} else if (consOddCond.getWaitingCount() && canConsOdd()) {
@@ -101,13 +102,14 @@ void MyMonitor::putOdd(int element) {
 	}			// ???????????????
 }
 
-int MyMonitor::getOdd() {
+void MyMonitor::getOdd() {
 	enter();
 	if (!canConsOdd()) {
 		wait(consOddCond);
 	}
+
 	buffer.erase(buffer.begin());
-	std::cout << buffer.size() << std::endl;
+	printBuffer();  
     if (consEvenCond.getWaitingCount() && canConsEven()) {
 		signal(consEvenCond);
     } else if (prodEvenCond.getWaitingCount() && canProdEven()) {
@@ -119,13 +121,13 @@ int MyMonitor::getOdd() {
 	}			// ???????????????
 }
 
-int MyMonitor::getEven() {
+void MyMonitor::getEven() {
 	enter();
 	if (!canConsEven()) {
 		wait(consEvenCond);
 	}
 	buffer.erase(buffer.begin());
-	std::cout << buffer.size() << std::endl;
+	printBuffer();
     if (consOddCond.getWaitingCount() && canConsOdd()) {
 		signal(consOddCond);
     } else if (prodEvenCond.getWaitingCount() && canProdEven()) {
@@ -137,6 +139,14 @@ int MyMonitor::getEven() {
 	}			// ???????????????
 }
  
+void MyMonitor::printBuffer() {
+    std::cout << "Buffer: ";
+    for (int i = 0; i < buffer.size(); i++) {
+        std::cout << buffer[i] << " ";
+    }
+    std::cout << std::endl;
+} 
+
 void* prodEven(void* arg) {
 	while(1) {
 		myMonitor.putEven(generateEvenNumber());
