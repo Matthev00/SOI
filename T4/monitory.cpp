@@ -13,7 +13,7 @@ public:
 	void getEven();
 	void putOdd(int element);
 	void getOdd();
-    vector<int> getBuffer() {
+    vector<int>& getBuffer() {
         return buffer;
     }
     void printBuffer();
@@ -73,15 +73,15 @@ void MyMonitor::putEven(int element) {
 	}
 	buffer.push_back(element);
 	printBuffer();
-	if (prodOddCond.getWaitingCount() && canProdOdd()) {
+	if (consEvenCond.getWaitingCount() && canConsEven()) {
+		signal(consEvenCond);
+	} else if (prodOddCond.getWaitingCount() && canProdOdd()) {
 		signal(prodOddCond);
 	} else if (consOddCond.getWaitingCount() && canConsOdd()) {
 		signal(consOddCond);
-	} else if (consEvenCond.getWaitingCount() && canConsEven()) {
-		signal(consEvenCond);
-	} else {		// ???????????????
-		leave();	// ???????????????
-	}			// ???????????????
+	}
+	leave();	
+
 }
 
 void MyMonitor::putOdd(int element) {
@@ -91,15 +91,14 @@ void MyMonitor::putOdd(int element) {
 	}
 	buffer.push_back(element);
 	printBuffer();
-	if (prodEvenCond.getWaitingCount() && canProdEven()) {
-		signal(prodEvenCond);
+	if (consEvenCond.getWaitingCount() && canConsEven()) {
+		signal(consEvenCond);
 	} else if (consOddCond.getWaitingCount() && canConsOdd()) {
 		signal(consOddCond);
-	} else if (consEvenCond.getWaitingCount() && canConsEven()) {
-		signal(consEvenCond);
-	} else {		// ???????????????
-		leave();	// ???????????????
-	}			// ???????????????
+	} else if (prodEvenCond.getWaitingCount() && canProdEven()) {
+		signal(prodEvenCond);
+	}  	
+	leave();	
 }
 
 void MyMonitor::getOdd() {
@@ -110,15 +109,14 @@ void MyMonitor::getOdd() {
 
 	buffer.erase(buffer.begin());
 	printBuffer();  
-    if (consEvenCond.getWaitingCount() && canConsEven()) {
-		signal(consEvenCond);
-    } else if (prodEvenCond.getWaitingCount() && canProdEven()) {
+    if (prodEvenCond.getWaitingCount() && canProdEven()) {
 		signal(prodEvenCond);
 	} else if (prodOddCond.getWaitingCount() && canProdOdd()) {
 		signal(prodOddCond);
-	} else {		// ???????????????
-		leave();	// ???????????????
-	}			// ???????????????
+	} else if (consEvenCond.getWaitingCount() && canConsEven()) {
+		signal(consEvenCond);
+    }
+	leave();	
 }
 
 void MyMonitor::getEven() {
@@ -128,15 +126,14 @@ void MyMonitor::getEven() {
 	}
 	buffer.erase(buffer.begin());
 	printBuffer();
-    if (consOddCond.getWaitingCount() && canConsOdd()) {
-		signal(consOddCond);
-    } else if (prodEvenCond.getWaitingCount() && canProdEven()) {
+    if (prodEvenCond.getWaitingCount() && canProdEven()) {
 		signal(prodEvenCond);
 	} else if (prodOddCond.getWaitingCount() && canProdOdd()) {
 		signal(prodOddCond);
-	} else {		// ???????????????
-		leave();	// ???????????????
-	}			// ???????????????
+	} else if (consOddCond.getWaitingCount() && canConsOdd()) {
+		signal(consOddCond);
+    }	
+	leave();	
 }
  
 void MyMonitor::printBuffer() {
@@ -178,9 +175,9 @@ void* consEven(void* arg) {
 
 int main( int argc, char* argv[])
 {
-    // for (int i = 0; i < 9; i++) {
-    //     myMonitor.getBuffer().push_back(i);
-    // }
+    for (int i = 0; i < 9; i++) {
+        myMonitor.getBuffer().push_back(i);
+    }
 	if (argc != 2) {
         std::cout << "Usage: ./program <test_number>\n";
         return 1;
