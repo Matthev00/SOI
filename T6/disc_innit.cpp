@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
+#include <cstring>
 
 struct Superblock {
     uint64_t diskSize;
@@ -16,7 +17,7 @@ struct INode {
     time_t creationTime;
     time_t modificationTime;
     uint32_t permissions;
-    std::vector<uint32_t> dataBlockPointers; // Wektory s¹ elastyczne, ale rozmiar mo¿e byæ sta³y w zale¿noœci od wymagañ
+    std::vector<uint32_t> dataBlockPointers;
     uint64_t fileSize;
     bool isDirectory;
     uint32_t referenceCount;
@@ -30,20 +31,20 @@ void initializeVirtualDisk(const std::string& diskName, uint32_t blockSize, uint
         return;
     }
 
-    // Inicjalizacja superblocku
+    // init superblock
     Superblock superblock{};
 
     superblock.diskSize = blockSize * totalBlocks;
     superblock.blockSize = blockSize;
-    superblock.diskUsage = 0;  // Na pocz¹tku dysk jest pusty
+    superblock.diskUsage = 0;  // Empty disk
     superblock.fileCount = 0;
     superblock.freeBlocks = totalBlocks;
-    superblock.lastModified = std::time(nullptr);  // Ustawia aktualny czas
+    superblock.lastModified = std::time(nullptr);  // Set current time
 
-    // Zapis superblocku do pliku
+    // save superblock to disk
     diskFile.write(reinterpret_cast<const char*>(&superblock), sizeof(Superblock));
 
-    // Inicjalizacja i zapis i-nodów
+    // Initialization of i-nodes
     INode emptyINode{};
     emptyINode.creationTime = 0;
     emptyINode.modificationTime = 0;
@@ -52,15 +53,15 @@ void initializeVirtualDisk(const std::string& diskName, uint32_t blockSize, uint
     emptyINode.isDirectory = false;
     emptyINode.referenceCount = 0;
 
-    // Przyk³adowa liczba i-nodów (mo¿e byæ dostosowana)
+    // makeing n i-nodes
     const uint32_t totalINodes = 100;
     for (uint32_t i = 0; i < totalINodes; ++i) {
         diskFile.write(reinterpret_cast<const char*>(&emptyINode), sizeof(INode));
     }
 
-    // Inicjalizacja bloków danych
+    // Initialization od data blocks
     char* emptyBlock = new char[blockSize];
-    std::memset(emptyBlock, 0, blockSize);
+    memset(emptyBlock, 0, blockSize);
     for (uint32_t i = 0; i < totalBlocks; ++i) {
         diskFile.write(emptyBlock, blockSize);
     }
@@ -72,8 +73,7 @@ void initializeVirtualDisk(const std::string& diskName, uint32_t blockSize, uint
 }
 
 int main() {
-    // Przyk³adowe parametry inicjalizacji
-    initializeVirtualDisk("virtual_disk.bin", 1024, 1000); // 1000 bloków po 1024 bajty ka¿dy
+    initializeVirtualDisk("virtual_disk.bin", 1024, 1000);
     return 0;
 }
 
